@@ -175,8 +175,8 @@ def update_spotify_audio_dataset(spotify_data_puller):
 if __name__ == '__main__':
     artist_list = ['Kanye West']
 
-    spotify = SpotipyDataPuller(client_id = '7085a21ce4124b3e89db61d750b133a7',
-                                client_secret = '2b02da51f99f4470a1c2ef91f28a0957')
+    spotify = SpotipyDataPuller(client_id = ,
+                                client_secret = )
 
     update_spotify_audio_dataset(spotify)
     # for artist in artist_list:

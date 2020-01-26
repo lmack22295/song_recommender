@@ -111,8 +111,8 @@ if __name__ == '__main__':
     master_lyrics_data = pd.read_csv("master_lyrics_data.csv")
 
     # initialize spotify data puller to access audio data from spotify API
-    spotify = SpotipyDataPuller(client_id='7085a21ce4124b3e89db61d750b133a7',
-                                client_secret='2b02da51f99f4470a1c2ef91f28a0957')
+    spotify = SpotipyDataPuller(client_id=,
+                                client_secret=)
 
     for artist in artist_list:
         try:
