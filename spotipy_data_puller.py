@@ -76,7 +76,6 @@ class SpotipyDataPuller:
                 ""
         return artist_genres
 
-
     def audio_features(self, uris):
         # Add new key-values to store audio features
         acousticness = []
@@ -159,6 +158,19 @@ class SpotipyDataPuller:
                 print("Failed to collect data for {} albums and genres".format(artist))
         return song_metadata, audio_metadata, artist_genres
 
+def update_spotify_audio_dataset(spotify_data_puller):
+    song_data = pd.read_csv("master_spotify_song_metadata.csv")
+    existing_audio_data = pd.read_csv("master_audio_data.csv")
+    song_data = song_data.merge(existing_audio_data, how='left', left_on='song_uri', right_on='uri')
+    song_data = song_data[pd.isnull(song_data.tempo)]
+
+    for i in range(int(len(song_data) / 1000)):
+        start_idx, end_idx = i*1000, i*1000 + 1000
+        curr_audio_data = spotify_data_puller.audio_features(song_data.song_uri.values[start_idx:end_idx])
+        audio_data = existing_audio_data.append(curr_audio_data)
+
+        audio_data.to_csv("master_audio_data.csv", index=False)
+        print("Stored audio_data for song_uris indexed from {} to {}".format(start_idx, end_idx))
 
 if __name__ == '__main__':
     artist_list = ['Kanye West']
@@ -166,11 +178,12 @@ if __name__ == '__main__':
     spotify = SpotipyDataPuller(client_id = '7085a21ce4124b3e89db61d750b133a7',
                                 client_secret = '2b02da51f99f4470a1c2ef91f28a0957')
 
-    for artist in artist_list:
-        song_data, audio_data, _ = spotify.build_artist_song_dataset([artist])
-        master_artist_data = song_data.merge(audio_data,
-                                             left_on='song_uri',
-                                             right_on='uri')
-
-        master_artist_data.to_csv("spotify_artist_data_{}.csv".format(artist))
-        print("Spotify audio data for artist: {} has been successfully loaded".format(artist))
+    update_spotify_audio_dataset(spotify)
+    # for artist in artist_list:
+    #     song_data, audio_data, _ = spotify.build_artist_song_dataset([artist])
+    #     master_artist_data = song_data.merge(audio_data,
+    #                                          left_on='song_uri',
+    #                                          right_on='uri')
+    #
+    #     master_artist_data.to_csv("spotify_artist_data_{}.csv".format(artist))
+    #     print("Spotify audio data for artist: {} has been successfully loaded".format(artist))

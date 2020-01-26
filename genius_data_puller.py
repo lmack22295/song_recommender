@@ -18,23 +18,27 @@ class GeniusDataPuller:
         self.artists = artist_list
         self.songs = song_list
 
-    def build_song_lyrics_data(self):
+    def build_song_lyrics_data(self, lyrics_data):
         # For ignoring SSL certificate errors
         songs_dataset = pd.DataFrame()
         count = 0
         for i in tqdm(range(len(self.songs))):
             print("Artist: {}; Song: {}".format(self.artists[i], self.songs[i]))
-            try:
-                curr_artist, curr_song = self.artists[i], self.songs[i]
-                curr_lyrics = self.get_song_lyrics_from_genius(curr_artist,
-                                                          curr_song)
-                count = count + 1
-                songs_dataset = songs_dataset.append(pd.DataFrame({'artist': [curr_artist],
-                                                                   'song': [curr_song],
-                                                                   'lyrics': [curr_lyrics]}))
-                print("Successfully loaded song {}".format(self.songs[i]))
-            except Exception:
-                print("Failed in Error")
+            curr_artist, curr_song = self.artists[i], self.songs[i]
+            if len(lyrics_data.loc[(lyrics_data.artist_name == curr_artist) &
+                               (lyrics_data.song_name == curr_song)]) == 0:
+                try:
+                    curr_lyrics = self.get_song_lyrics_from_genius(curr_artist,
+                                                              curr_song)
+                    count = count + 1
+                    songs_dataset = songs_dataset.append(pd.DataFrame({'artist': [curr_artist],
+                                                                       'song': [curr_song],
+                                                                       'lyrics': [curr_lyrics]}))
+                    print("Successfully loaded song {}".format(self.songs[i]))
+                except Exception:
+                    print("Failed in Error")
+            else:
+                print("Already have lyrics for {} by {}".format(curr_song, curr_artist))
 
         return songs_dataset
 
@@ -103,28 +107,44 @@ class GeniusDataPuller:
 
 
 if __name__ == '__main__':
-    artist_list = ['Kanye West']
-    master_lyrics_data = pd.read_csv("latest_lyrics_data.csv")
+    artist_list = ['MGMT']
+    master_lyrics_data = pd.read_csv("master_lyrics_data.csv")
 
     # initialize spotify data puller to access audio data from spotify API
     spotify = SpotipyDataPuller(client_id='7085a21ce4124b3e89db61d750b133a7',
                                 client_secret='2b02da51f99f4470a1c2ef91f28a0957')
 
     for artist in artist_list:
-        # Get Spotify song_metadata and audio features from Spotify API
-        song_data, audio_data, _ = spotify.build_artist_song_dataset([artist])
-        master_artist_data = song_data.merge(audio_data,
-                                             left_on='song_uri',
-                                             right_on='uri')
-        master_artist_data.to_csv("spotify_artist_data_{}.csv".format(artist))
+        try:
+            master_artist_data = pd.read_csv("spotify_artist_data_{}.csv".format(artist))
+        except:
+            song_data, audio_data, _ = spotify.build_artist_song_dataset([artist])
+            # Get Spotify song_metadata and audio features from Spotify API
+            master_artist_data = song_data.merge(audio_data,
+                                                 left_on='song_uri',
+                                                 right_on='uri')
+            master_artist_data.to_csv("spotify_artist_data_{}.csv".format(artist))
+
+            master_audio_data = pd.read_csv("master_audio_data.csv")
+            master_audio_data = master_audio_data.append(audio_data).drop_duplicates()
+            master_audio_data.to_csv("master_audio_data.csv", index=False)
 
         genius = GeniusDataPuller(master_artist_data.artist_name.values, master_artist_data.song_name.values)
-        song_dataset = genius.build_song_lyrics_data()
+        song_dataset = genius.build_song_lyrics_data(master_lyrics_data)
 
-        curr_lyrics_data = song_data.merge(master_artist_data,
-                                       left_on=['artist', 'song'],
-                                       right_on=['artist_name', 'song_name'])
-        curr_lyrics_data.to_csv("spotify_artist_lyrics_data_{}.csv".format(artist))
+        if not song_dataset.empty:
+            curr_lyrics_data = song_dataset.merge(master_artist_data,
+                                           left_on=['artist', 'song'],
+                                           right_on=['artist_name', 'song_name'])
+            curr_lyrics_data.to_csv("spotify_artist_lyrics_data_{}.csv".format(artist))
 
-        master_lyrics_data = master_lyrics_data.append(curr_lyrics_data)
-        master_lyrics_data.to_csv("master_lyrics_data.csv", index=False)
+            master_lyrics_data = master_lyrics_data.append(curr_lyrics_data)
+            master_lyrics_data = master_lyrics_data[['accousticness', 'album',
+                                                     'artist_name', 'danceability', 'energy',
+                                                     'id', 'instrumentalness',
+                                                     'liveness', 'loudness', 'lyrics',
+                                                     'popularity',
+                                                     'song_name', 'song_uri', 'speechiness',
+                                                     'tempo', 'track_number',
+                                                     'uri', 'valence']]
+            master_lyrics_data.drop_duplicates().to_csv("master_lyrics_data.csv", index=False)
