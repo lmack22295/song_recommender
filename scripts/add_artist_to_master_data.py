@@ -3,7 +3,6 @@ from analyzing_music.data_extractors.genius_data_puller import GeniusDataPuller
 from analyzing_music.data_extractors import lyrics_cleaner
 
 
-
 if __name__ == '__main__':
 
     lyrics_read_filepath = "./data/latest_lyrics_data.csv"
