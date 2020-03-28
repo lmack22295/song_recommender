@@ -1,4 +1,4 @@
-from spotipy_data_puller import SpotipyDataPuller
+from analyzing_music.data_extractors.spotipy_data_puller import SpotipyDataPuller
 from analyzing_music.data_extractors.genius_data_puller import GeniusDataPuller
 from analyzing_music.data_extractors import lyrics_cleaner
 
