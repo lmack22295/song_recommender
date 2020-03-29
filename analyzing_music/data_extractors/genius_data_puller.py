@@ -5,10 +5,10 @@ from urllib.request import Request, urlopen
 from tqdm import tqdm
 import pandas as pd
 import re
-from spotipy_data_puller import SpotipyDataPuller
-from lyrics_cleaner import clean_lyrics_data
+from analyzing_music.data_extractors import spotipy_data_puller
+from analyzing_music.data_extractors.lyrics_cleaner import clean_lyrics_data
 
-GENIUS_API_KEY = ''
+GENIUS_API_KEY = '2qq1ZZDwqUbHXCm7p9QFyhK7ZNKgslA8EgWf7BUonfz5PKPSPHtJ0ISVj3nyeHat'
 
 
 class GeniusDataPuller:
@@ -18,32 +18,29 @@ class GeniusDataPuller:
         self.songs = song_list
         self.uris = uri_list
 
-    def build_song_lyrics_data(self, lyrics_data):
+    def build_song_lyrics_data(self):
         # For ignoring SSL certificate errors
         songs_dataset = pd.DataFrame()
         count = 0
+
         for i in tqdm(range(len(self.songs))):
             print("Artist: {}; Song: {}".format(self.artists[i], self.songs[i]))
             curr_artist, curr_song, curr_uri = self.artists[i], self.songs[i], self.uris[i]
-            if len(lyrics_data.loc[(lyrics_data.artist_name == curr_artist) &
-                               (lyrics_data.song_name == curr_song)]) == 0:
-                try:
-                    curr_lyrics = self.scrape_genius_for_song_lyrics(curr_artist,
-                                                              curr_song)
-                    count = count + 1
-                    songs_dataset = songs_dataset.append(pd.DataFrame({'artist_name': [curr_artist],
-                                                                       'song_name': [curr_song],
-                                                                       'uri': [curr_uri],
-                                                                       'lyrics': [curr_lyrics]}))
-                    print("Successfully loaded song {}".format(self.songs[i]))
-                except Exception:
-                    songs_dataset = songs_dataset.append(pd.DataFrame({'artist_name': [curr_artist],
-                                                                       'song_name': [curr_song],
-                                                                       'uri': [curr_uri],
-                                                                       'lyrics': [None]}))
-                    print("Failed in Error")
-            else:
-                print("Already have lyrics for {} by {}".format(curr_song, curr_artist))
+            try:
+                curr_lyrics = self.scrape_genius_for_song_lyrics(curr_artist,
+                                                                 curr_song)
+                count = count + 1
+                songs_dataset = songs_dataset.append(pd.DataFrame({'artist_name': [curr_artist],
+                                                                   'song_name': [curr_song],
+                                                                   'uri': [curr_uri],
+                                                                   'lyrics': [curr_lyrics]}))
+                print("Successfully loaded song {}".format(self.songs[i]))
+            except Exception:
+                songs_dataset = songs_dataset.append(pd.DataFrame({'artist_name': [curr_artist],
+                                                                   'song_name': [curr_song],
+                                                                   'uri': [curr_uri],
+                                                                   'lyrics': [None]}))
+                print("Failed in Error")
 
         return songs_dataset
 
@@ -71,6 +68,8 @@ class GeniusDataPuller:
         return song_lyrics
 
     def scrape_genius_for_song_lyrics(self, artist, song):
+        feature_idx = song.find(' (feat')
+        song = song[:feature_idx] if feature_idx != -1 else song
         ctx = ssl.create_default_context()
         ctx.check_hostname = False
         ctx.verify_mode = ssl.CERT_NONE
@@ -112,12 +111,12 @@ class GeniusDataPuller:
         song_json['artist_name'] = artist
         song_json['song_name'] = song
         # Save the json created with the file name as title + .json
-        with open("music_lyrics/" + song_json["Title"] + '.json', 'w+') as outfile:
-            json.dump(song_json, outfile, indent=4, ensure_ascii=False)
-
-        # Save the html content into an html file with name as title + .html
-        with open("music_lyrics/" + song_json["Title"] + '.html', 'wb') as file:
-            file.write(html)
+        # with open("music_lyrics/" + song_json["Title"] + '.json', 'w+') as outfile:
+        #     json.dump(song_json, outfile, indent=4, ensure_ascii=False)
+        #
+        # # Save the html content into an html file with name as title + .html
+        # with open("music_lyrics/" + song_json["Title"] + '.html', 'wb') as file:
+        #     file.write(html)
 
         return ' '.join(song_json['Lyrics'][0])
 
@@ -167,7 +166,7 @@ if __name__ == '__main__':
     latest_lyrics_data = pd.read_csv("latest_lyrics_data.csv")
 
     # initialize spotify data puller to access audio data from spotify API
-    spotify = SpotipyDataPuller(client_id='7085a21ce4124b3e89db61d750b133a7',
+    spotify = spotipy_data_puller.SpotipyDataPuller(client_id='7085a21ce4124b3e89db61d750b133a7',
                                 client_secret='2b02da51f99f4470a1c2ef91f28a0957')
 
     for artist in artist_list:

@@ -3,6 +3,7 @@ from spotipy.oauth2 import SpotifyClientCredentials
 from tqdm import tqdm
 import pandas as pd
 import numpy as np
+from analyzing_music.data_extractors.utils import update_lyrics_dataset
 
 class SpotipyDataPuller:
     AUDIO_FEATURE_NAMES = ['acousticness', 'danceability', 'energy', 'instrumentalness', 'liveness',
@@ -121,7 +122,7 @@ class SpotipyDataPuller:
                 # Append to relevant key-value
                 for feature_name in self.AUDIO_FEATURE_NAMES:
                     # Get value of feature_name for track
-                    curr_feature_value = self.sp.track(track) if feature_name == 'popularity'\
+                    curr_feature_value = self.sp.track(track)['popularity'] if feature_name == 'popularity'\
                                                               else track if feature_name == 'uri' \
                                                               else features[0][feature_name]
                     # Add audio_features for `track` to feature set
@@ -141,7 +142,8 @@ class SpotipyDataPuller:
         For each artist:
             1. Get info (spotify uri and name) for all albums by the artist from Spotify API
             2. Get metadata for all songs from each album from Spotify API
-            3. if `get_genres == True` then get artist genres from Spotify API
+            3. Get audio_features for all songs
+            4. if `get_genres == True` then get artist genres from Spotify API
         """
         song_metadata = pd.DataFrame()
         audio_metadata = pd.DataFrame()
@@ -168,19 +170,6 @@ class SpotipyDataPuller:
                 print("Failed to collect data for {} albums and genres".format(artist))
         return song_metadata, audio_metadata, artist_genres
 
-def update_spotify_audio_dataset(spotify_data_puller):
-    song_data = pd.read_csv("master_spotify_song_metadata.csv")
-    audio_data = pd.read_csv("master_audio_data.csv")
-    song_data = song_data.merge(audio_data, how='left', left_on='song_uri', right_on='uri')
-    song_data = song_data[pd.isnull(song_data.tempo)]
-    
-    for i in range(int(len(song_data) / 1000)):
-        start_idx, end_idx = i*1000, i*1000 + 1000
-        curr_audio_data = spotify_data_puller.audio_features(song_data.song_uri.values[start_idx:end_idx])
-        audio_data = audio_data.append(curr_audio_data)
-
-        audio_data.to_csv("master_audio_data.csv", index=False)
-        print("Stored audio_data for song_uris indexed from {} to {}".format(start_idx, end_idx))
 
 if __name__ == '__main__':
     artist_list = ['Alicia Keys']

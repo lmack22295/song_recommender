@@ -1,5 +1,5 @@
 import pandas as pd
-from genius_data_puller import GeniusDataPuller
+from analyzing_music.data_extractors.genius_data_puller import GeniusDataPuller
 
 
 def update_lyrics_dataset():

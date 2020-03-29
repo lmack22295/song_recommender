@@ -7,15 +7,15 @@ if __name__ == '__main__':
 
     lyrics_read_filepath = "./data/latest_lyrics_data.csv"
     lyrics_write_filepath = "./data/latest_lyrics_data2.csv"
-    artist_filename = "spotify_artist_data_{}.csv"
-    audio_filepath = "master_audio_data.csv"
+    artist_filename = "./data/spotify_artist_data_{}.csv"
+    audio_filepath = "./data/master_data/master_audio_data.csv"
 
     spotify_client_id = '7085a21ce4124b3e89db61d750b133a7'
     spotify_client_secret = '2b02da51f99f4470a1c2ef91f28a0957'
     # update_lyrics_dataset()
     artist_list = \
         ['Clairo','Alt-J', 'James Taylor', 'Jack Johnson', 'Flume', 'FKJ',
-         'James Blake', 'Gunna', 'Noname', 'Oh Wonder',
+         'James Blake', 'Gunna', 'Noname', 'Oh Wonder', 'Blood Orange',
          'Mac Demarco', 'Jhene Aiko', 'JMSN', 'Calvin Harris',
          'Travis Scott', 'Young Thug', 'John Mayer',
          'The Weeknd', 'The Roots', 'Childish Gambino']
@@ -28,6 +28,7 @@ if __name__ == '__main__':
     for artist in artist_list:
         try:
             master_artist_data = pd.read_csv(artist_filename.format(artist))
+            print("Successfully retrieved {} songs from cache".format(artist))
         except:
             song_data, audio_data, _ = spotify.build_artist_song_dataset([artist])
             # Get Spotify song_metadata and audio features from Spotify API
@@ -46,6 +47,7 @@ if __name__ == '__main__':
         song_dataset = genius.build_song_lyrics_data(latest_lyrics_data)
 
         if not song_dataset.empty:
+            import pdb; pdb.set_trace()
             print(song_dataset.columns)
             curr_lyrics_data = song_dataset.merge(master_artist_data,
                                                   left_on=['artist_name', 'song_name'],
