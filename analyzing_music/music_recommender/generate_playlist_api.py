@@ -23,7 +23,6 @@ class GeneratePlaylistAPI:
         self.spotify_api = sp
 
     def generate_user_playlist_recs(self, song_name, song_recs):
-        self.spotify_api.user_playlist_create(user='lmack22295', name="song_recs_{}".format(song_name))
         playlist = self.spotify_api.user_playlist_create(user='lmack22295',
                                                          name="song_recs_{}".format(song_name))
         print("Creating Playlist...")
@@ -94,13 +93,13 @@ if __name__ == '__main__':
         lyrics_features = get_doc2vec_audio_features()
 
     # set up spotify api
-    client_id = '7085a21ce4124b3e89db61d750b133a7'
-    client_secret = '2b02da51f99f4470a1c2ef91f28a0957'
+    spotify_client_id = input('Input your spotify client_id')
+    spotify_client_secret = input('Input your spotify client secret')
 
     playlist = GeneratePlaylistAPI(song_data=song_data,
                                    lyrics_features=lyrics_features,
-                                   client_id=client_id,
-                                   client_secret=client_secret)
+                                   client_id=spotify_client_id,
+                                   client_secret=spotify_client_secret)
 
     keep_lookup = 'y'
     while keep_lookup == 'y':

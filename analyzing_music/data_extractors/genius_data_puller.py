@@ -8,7 +8,7 @@ import re
 from analyzing_music.data_extractors import spotipy_data_puller
 from analyzing_music.data_extractors.lyrics_cleaner import clean_lyrics_data
 
-GENIUS_API_KEY = '2qq1ZZDwqUbHXCm7p9QFyhK7ZNKgslA8EgWf7BUonfz5PKPSPHtJ0ISVj3nyeHat'
+GENIUS_API_KEY = input("Input your genius API Key")
 
 
 class GeniusDataPuller:
